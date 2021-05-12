@@ -1,5 +1,6 @@
 const { verifyKey } = require("discord-interactions");
 const { default: fetch } = require("node-fetch");
+const { encrypt } = require("../crypto");
 
 /**
  * @param {import('@vercel/node').VercelRequest} req
@@ -56,19 +57,32 @@ module.exports = async (req, res) => {
         (req.body.data.options || []).map(({ name, value }) => [name, value])
       );
 
-      const roomData = await fetch(
-        "https://magic-inquisitive-cobra.glitch.me/?name=" +
-          encodeURIComponent(args.get("name") ?? "Brown Band")
+      const [encryptedToken, iv] = await encrypt(req.body.token);
+
+      const result = await fetch(
+        `https://${process.env.LINK_SERVER_HOST}/?name=${encodeURIComponent(
+          args.get("name") || "Brown Band"
+        )}&token=${encryptedToken}&iv=${iv}`
       )
         .then((res) => res.json())
         .catch((err) => {
           console.error(err);
         });
 
-      console.log("res");
-
-      console.log(roomData);
-
-      res.json({ type: 5 });
+      if (result.success) {
+        res.json({ type: 5 });
+      } else {
+        console.log(result);
+        res.json({
+          type: 4,
+          data: {
+            tts: false,
+            content: "Oops, something went wrong! cc <@706842348239323199>",
+            allowed_mentions: {
+              users: ["706842348239323199"],
+            },
+          },
+        });
+      }
     });
 };

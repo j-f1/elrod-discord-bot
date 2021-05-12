@@ -3,27 +3,33 @@ const app = express();
 const port = process.env.PORT;
 const { encrypt, decrypt } = require("./crypto");
 const puppeteer = require("puppeteer");
+const fetch = require("node-fetch").default;
 
 let screenshot;
 
-// ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==&id=LN88YRtw0Dc3pM/Wf3OKiQ==&id_iv=LJB4OrN5kzZrNqkfKyQmTw==
+const callDiscord = (route, method, body) =>
+  fetch(`https://discord.com/api/v8${route}`, {
+    method,
+    headers: new fetch.Headers([
+      ["Authorization", `Bot ${process.env.DISCORD_BOT_TOKEN}`],
+      ["Content-Type", "application/json"],
+    ]),
+    body: JSON.stringify(body),
+  })
+    .then((res) => res.json())
+    .catch(console.error);
+
+// ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==
 app.get("/", async (req, res) => {
-  const { name } = req.query;
-  if (!name) {
-    res.status(400).send("Invalid request");
+  const { name, token: encryptedToken, iv } = req.query;
+  if (!name || !encryptedToken || !iv) {
+    res.status(400).send({ success: false, query: req.query });
     return;
   }
   const start = Date.now();
 
-  // const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
-  // if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
-  //   res.send(400, "Invalid request");
-  //   return;
-  // }
-  // const [token, id] = await Promise.all([
-  //   decrypt(encryptedToken, token_iv),
-  //   decrypt(encryptedId, id_iv)
-  // ]);
+  const token = await decrypt(encryptedToken, iv);
+
   res.send({ success: true });
 
   try {
@@ -38,7 +44,7 @@ app.get("/", async (req, res) => {
       // },
     });
     try {
-      console.log("launch", (Date.now() - start) / 1000);
+      // console.log("launch", (Date.now() - start) / 1000);
       const page = await browser.newPage();
       const snap = async () => {
         // screenshot = await page.screenshot();
@@ -56,7 +62,7 @@ app.get("/", async (req, res) => {
       );
       await snap();
 
-      console.log("createRoom", (Date.now() - start) / 1000);
+      // console.log("createRoom", (Date.now() - start) / 1000);
       await page.evaluate(
         (name) =>
           new Promise((resolve) => {
@@ -69,7 +75,7 @@ app.get("/", async (req, res) => {
           }),
         name
       );
-      console.log("create", (Date.now() - start) / 1000);
+      // console.log("create", (Date.now() - start) / 1000);
       await snap();
       await page.waitForTimeout(500);
       await snap();
@@ -81,7 +87,30 @@ app.get("/", async (req, res) => {
         .waitForSelector(".joinLink")
         .then((el) => el.evaluate((node) => node.textContent));
       await snap();
-      console.log("done in", Date.now() - start);
+      console.log("generated link in", (Date.now() - start) / 1000);
+
+      const embed = {
+        title: `Jstris: ${name}`,
+        type: "rich",
+        url: roomLink,
+        color: "3066993",
+        description: `<${roomLink}>`,
+      };
+
+      await callDiscord(
+        `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+        "PATCH",
+        {
+          embeds: [
+            {
+              ...embed,
+              footer: {
+                text: "Waiting for someone to join…",
+              },
+            },
+          ],
+        }
+      );
 
       // now wait for the user to show up
       let done = false;
@@ -100,8 +129,27 @@ app.get("/", async (req, res) => {
       }
       await browser.close();
 
-      if (!done) {
-        // TODO: update embed
+      if (done) {
+        await callDiscord(
+          `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+          "PATCH",
+          { embeds: [embed] }
+        );
+      } else {
+        await callDiscord(
+          `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+          "PATCH",
+          {
+            embeds: [
+              {
+                ...embed,
+                color: "15158332",
+                url: undefined,
+                description: "Room timed out. Run `/jstris` to get a new link!",
+              },
+            ],
+          }
+        );
       }
     } catch (e) {
       console.error(e);
@@ -118,6 +166,7 @@ app.get("/", async (req, res) => {
 //   res.header("Content-Type", "image/png");
 //   res.send(screenshot);
 // });
+
 app.get("/encrypt", async (req, res) => {
   const { token, id } = req.query;
   if (!token || !id) {
