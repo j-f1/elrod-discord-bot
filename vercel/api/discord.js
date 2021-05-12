@@ -60,6 +60,7 @@ module.exports = async (req, res) => {
             ],
           },
         });
+        return;
       }
       if (!command || command.name !== "jstris") {
         res.json({
