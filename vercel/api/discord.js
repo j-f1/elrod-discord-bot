@@ -40,6 +40,27 @@ module.exports = async (req, res) => {
       }
 
       const command = req.body.data;
+      if (command && command.name === "about-tetrod") {
+        res.json({
+          type: 4,
+          data: {
+            title: `Tetrod`,
+            type: "rich",
+            url: "https://github.com/j-f1/elrod-discord-bot",
+            description: `Tetrod is a bot by Jed Fox`,
+            fields: [
+              {
+                name: "Commit SHA",
+                value: process.env.VERCEL_GIT_COMMIT_SHA,
+              },
+              {
+                name: "Deployment URL",
+                value: process.env.VERCEL_URL,
+              },
+            ],
+          },
+        });
+      }
       if (!command || command.name !== "jstris") {
         res.json({
           type: 4,
