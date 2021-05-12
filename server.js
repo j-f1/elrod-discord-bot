@@ -25,7 +25,7 @@ app.get("/", async (req, res) => {
   //   decrypt(encryptedId, id_iv)
   // ]);
 
-  console.log("boot");
+  console.log("boot", (Date.now() - start) / 1000);
   const browser = await puppeteer.launch({
     args: ["--no-sandbox"],
     defaultViewport: {
@@ -33,40 +33,39 @@ app.get("/", async (req, res) => {
     height: 1200
     }
   });
-  console.log("launch");
+  console.log("launch", (Date.now() - start) / 1000);
   const page = await browser.newPage();
   const snap = async () => {
     // screenshot = await page.screenshot();
     // console.log("snap");
   };
 
-  await page.goto("https://jstris.jezevec10.com/");
-  console.log("goto");
+  page.goto("https://jstris.jezevec10.com/");
   await snap();
   await page
-    .waitForSelector("#lobby", { visible: true })
+    .waitForSelector("#lobby")
     .then(el => el.click());
-  console.log("lobby");
+  console.log("lobby", (Date.now() - start) / 1000);
   await snap();
   await page
-    .waitForSelector("#createRoomButton", { visible: true })
+    .waitForSelector("#createRoomButton")
     .then(el => el.click());
-  console.log("createRoom");
+  console.log("createRoom", (Date.now() - start) / 1000);
   await snap();
   await page.evaluate(name => {
     document.getElementById("roomName").value = name;
   }, name);
-  console.log("setName");
+  console.log("setName", (Date.now() - start) / 1000);
   await snap();
   await page.click("#isPrivate");
-  console.log("private");
+  console.log("private", (Date.now() - start) / 1000);
   await snap();
   await page.waitForTimeout(250);
   await page.click("#create");
-  console.log("create");
+  console.log("create", (Date.now() - start) / 1000);
   await snap();
   const roomLink = await page
-    .waitForSelector(".joinLink", { visible: true })
+    .waitForSelector(".joinLink")
     .then(el => el.evaluate(node => node.textContent));
   await snap();
   console.log("done in", Date.now() - start);
