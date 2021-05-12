@@ -30,12 +30,12 @@ app.post(
                     name: "Commit SHA",
                     value: `\`${child_process
                       .execSync("git rev-parse HEAD", { encoding: "utf-8" })
-                      .trim()}\``
-                  }
-                ]
-              }
-            ]
-          }
+                      .trim()}\``,
+                  },
+                ],
+              },
+            ],
+          },
         });
         return;
       }
@@ -44,7 +44,7 @@ app.post(
           const args = new Map(
             (req.body.data.options || []).map(({ name, value }) => [
               name,
-              value
+              value,
             ])
           );
 
@@ -55,13 +55,13 @@ app.post(
 
           res.json({ type: 5 });
 
-          jstris(name, async roomLink => {
+          jstris(name, async (roomLink) => {
             const embed = {
               title: `Jstris: ${name}`,
               type: "rich",
               url: roomLink,
               color: "3066993",
-              description: `<${roomLink}>`
+              description: `<${roomLink}>`,
             };
 
             await callDiscord(
@@ -70,12 +70,12 @@ app.post(
               {
                 embeds: [
                   {
-                    ...embed
+                    ...embed,
                     // footer: {
                     //   text: "Waiting for someone to join…"
                     // }
-                  }
-                ]
+                  },
+                ],
               }
             );
           })
@@ -98,9 +98,9 @@ app.post(
                         color: "15158332",
                         url: undefined,
                         description:
-                          "Room timed out. Run `/jstris` to get a new link!"
-                      }
-                    ]
+                          "Room timed out. Run `/jstris` to get a new link!",
+                      },
+                    ],
                   }
                 );
               }
@@ -114,9 +114,9 @@ app.post(
               tts: false,
               content: "Oops, something went wrong! cc <@706842348239323199>",
               allowed_mentions: {
-                users: ["706842348239323199"]
-              }
-            }
+                users: ["706842348239323199"],
+              },
+            },
           });
         }
         return;
@@ -126,98 +126,18 @@ app.post(
           type: 4,
           data: {
             tts: false,
-            content: `Unrecognized command \`${(command && command.name) ||
-              "<unknown>"}\``,
+            content: `Unrecognized command \`${
+              (command && command.name) || "<unknown>"
+            }\``,
             embeds: [],
-            allowed_mentions: { parse: [] }
-          }
+            allowed_mentions: { parse: [] },
+          },
         });
         return;
       }
     }
   }
 );
-
-// ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==
-app.get("/", async (req, res) => {
-  const { name, token: encryptedToken, iv } = req.query;
-  if (!name || !encryptedToken || !iv) {
-    res.status(400).send({ success: false, query: req.query });
-    return;
-  }
-  const start = Date.now();
-
-  const token = await decrypt(encryptedToken, iv);
-
-  res.send({ success: true });
-
-  const [roomWorkedOut, roomLink] = await jstris(name, async roomLink => {
-    const embed = {
-      title: `Jstris: ${name}`,
-      type: "rich",
-      url: roomLink,
-      color: "3066993",
-      description: `<${roomLink}>`
-    };
-
-    await callDiscord(
-      `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-      "PATCH",
-      {
-        embeds: [
-          {
-            ...embed
-            // footer: {
-            //   text: "Waiting for someone to join…"
-            // }
-          }
-        ]
-      }
-    );
-  });
-  if (roomWorkedOut) {
-    // await callDiscord(
-    //   `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-    //   "PATCH",
-    //   { embeds: [embed] }
-    // );
-  } else {
-    await callDiscord(
-      `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-      "PATCH",
-      {
-        embeds: [
-          {
-            title: `Jstris: ${name}`,
-            type: "rich",
-            color: "15158332",
-            url: undefined,
-            description: "Room timed out. Run `/jstris` to get a new link!"
-          }
-        ]
-      }
-    );
-  }
-});
-
-// app.get("/screenshot", (req, res) => {
-//   res.header("Content-Type", "image/png");
-//   res.send(screenshot[0]);
-// });
-
-app.get("/encrypt", async (req, res) => {
-  const { token, id } = req.query;
-  if (!token || !id) {
-    res.end(400, "Invalid request");
-    return;
-  }
-  const [[encryptedToken, tokenIv], [encryptedId, idIv]] = await Promise.all(
-    [token, id].map(encrypt)
-  );
-  res.send(
-    `/?token=${encryptedToken}&token_iv=${tokenIv}&id=${encryptedId}&id_iv=${idIv}`
-  );
-});
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`);
