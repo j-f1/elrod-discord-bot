@@ -4,6 +4,8 @@ const port = process.env.PORT;
 const { encrypt, decrypt } = require("./crypto");
 const puppeteer = require("puppeteer");
 
+let screenshot;
+
 // ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==&id=LN88YRtw0Dc3pM/Wf3OKiQ==&id_iv=LJB4OrN5kzZrNqkfKyQmTw==
 app.get("/", async (req, res) => {
   const { name } = req.query;
@@ -27,26 +29,51 @@ app.get("/", async (req, res) => {
     args: ["--no-sandbox"]
   });
   const page = await browser.newPage();
+  const snap = async () => {
+    screenshot = await page.screenshot();
+    console.log("snap");
+  };
 
   await page.goto("https://jstris.jezevec10.com/");
-  cons
-  (await page.waitForSelector("#lobby", { visible: true })).click();
-  (await page.waitForSelector("#createRoomButton", { visible: true })).click();
+  console.log("goto");
+  await snap();
+  await page
+    .waitForSelector("#lobby", { visible: true })
+    .then(el => el.click());
+  console.log("lobby");
+  await snap();
+  await page
+    .waitForSelector("#createRoomButton", { visible: true })
+    .then(el => el.click());
+  console.log("createRoom");
+  await snap();
   await page.evaluate(name => {
     document.getElementById("roomName").value = name;
-    document.getElementById("numPlayers").selectedIndex = 0;
   }, name);
+  console.log("setName");
+  await snap();
   await page.click("#isPrivate");
+  console.log("private");
+  await snap();
   await page.waitForTimeout(250);
   await page.click("#create");
+  console.log("create");
+  await snap();
   const roomLink = await page
     .waitForSelector("#joinLink", { visible: true })
     .then(el => el.evaluate(node => node.textContent));
+  await snap();
+  console.log("done");
 
   await browser.close();
   res.send({ success: true, link: roomLink });
 
   // res.send(`Token: ${token}, ID: ${id}`);
+});
+
+app.get("/screenshot", (req, res) => {
+  res.header("Content-Type", "image/png");
+  res.send(screenshot);
 });
 app.get("/encrypt", async (req, res) => {
   const { token, id } = req.query;
