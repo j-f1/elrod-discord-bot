@@ -31,14 +31,14 @@ app.get("/", async (req, res) => {
     await page.waitForSelector("#lobby", { visible: true })
   )).click();
   (await page.waitForSelector("#createRoomButton", { visible: true })).click();
-  await page.evaluate(
-    name => {
-      document.getElementById("roomName").value = name;
-      document.getElementById("numPlayers").selectedIndex = 0
-    },
-    name
-  );
-  await page.click('#isPrivate')
+  await page.evaluate(name => {
+    document.getElementById("roomName").value = name;
+    document.getElementById("numPlayers").selectedIndex = 0;
+  }, name);
+  await page.click("#isPrivate");
+  await page.waitForTimeout(250);
+  await page.click("#create");
+  const roomLink = await page.waitForSelector('#joinLink', { visible:true})
 
   await browser.close();
   res.sendFile("/tmp/screenshot.png");
