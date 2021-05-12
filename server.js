@@ -27,60 +27,72 @@ app.get("/", async (req, res) => {
 
   console.log("boot", (Date.now() - start) / 1000);
   try {
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: "wss://chrome.browserless.io/",
-    // args: ["--no-sandbox"],
-    defaultViewport: {
-      width: 1200,
-      height: 1200
+    const browser = await puppeteer.connect({
+      browserWSEndpoint:
+        "wss://chrome.browserless.io?&timeout=10000&token=" + process.env.BROWSERLESS_TOKEN,
+      // args: ["--no-sandbox"],
+      defaultViewport: {
+        width: 1200,
+        height: 1200
+      }
+    });
+    try {
+      console.log("launch", (Date.now() - start) / 1000);
+      const page = await browser.newPage();
+      const snap = async () => {
+        // screenshot = await page.screenshot();
+        // console.log("snap");
+      };
+
+      await page.goto("https://jstris.jezevec10.com/");
+      await snap();
+
+      await page.waitForSelector("#lobby").then(el =>
+        el.evaluate(node => {
+          node.click();
+          document.getElementById("createRoomButton").click();
+        })
+      );
+      await snap();
+
+      console.log("createRoom", (Date.now() - start) / 1000);
+      await page.evaluate(
+        name =>
+          new Promise(resolve => {
+            document.getElementById("roomName").value = name;
+            document.getElementById("isPrivate").click();
+            setTimeout(() => {
+              document.getElementById("create").click();
+              resolve();
+            }, 500);
+          }),
+        name
+      );
+      console.log("create", (Date.now() - start) / 1000);
+      await snap();
+      await page.waitForTimeout(500);
+      await snap();
+
+      await page.waitForTimeout(500);
+      await snap();
+
+      const roomLink = await page
+        .waitForSelector(".joinLink")
+        .then(el => el.evaluate(node => node.textContent));
+      await snap();
+      console.log("done in", Date.now() - start);
+
+      await browser.close();
+      res.send({ success: true, link: roomLink });
+    } catch (e) {
+      console.error(e);
+      await browser.close();
+      res.send({ success: false });
     }
-  });
-  try {
-  console.log("launch", (Date.now() - start) / 1000);
-  const page = await browser.newPage();
-  const snap = async () => {
-    // screenshot = await page.screenshot();
-    // console.log("snap");
-  };
-
-  page.goto("https://jstris.jezevec10.com/");
-  await snap();
-  await page.waitForSelector("#lobby").then(el =>
-    el.evaluate(node => {
-      node.click();
-      document.getElementById("createRoomButton").click();
-    })
-  );
-  console.log("createRoom", (Date.now() - start) / 1000);
-  await snap();
-  await page.evaluate(
-    name =>
-      new Promise(resolve => {
-        document.getElementById("roomName").value = name;
-        document.getElementById("isPrivate").click();
-        setTimeout(() => {
-          document.getElementById("create").click();
-          resolve();
-        }, 250);
-      }),
-    name
-  );
-  console.log("create", (Date.now() - start) / 1000);
-  await snap();
-  const roomLink = await page
-    .waitForSelector(".joinLink")
-    .then(el => el.evaluate(node => node.textContent));
-  await snap();
-  console.log("done in", Date.now() - start);
-
-  await browser.close();
-  res.send({ success: true, link: roomLink });
   } catch (e) {
-    console.error(e)
-    await browser.close()
+    console.error(e);
     res.send({ success: false });
   }
-  } catch (e) { console.error(e); res.send({ success: false });}
   // res.send(`Token: ${token}, ID: ${id}`);
 });
 
