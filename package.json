@@ -9,7 +9,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "node-fetch": "^2.6.1",
-    "puppeteer": "^9.1.1"
+    "puppeteer": "^9.1.1",
+    "discord-interactions": "^2.0.1"
   },
   "engines": {
     "node": "12.x"
