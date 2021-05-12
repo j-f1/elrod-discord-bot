@@ -104,9 +104,9 @@ app.get("/", async (req, res) => {
           embeds: [
             {
               ...embed,
-              footer: {
-                text: "Waiting for someone to join…",
-              },
+              // footer: {
+              //   text: "Waiting for someone to join…"
+              // }
             },
           ],
         }
@@ -130,11 +130,11 @@ app.get("/", async (req, res) => {
       await browser.close();
 
       if (done) {
-        await callDiscord(
-          `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-          "PATCH",
-          { embeds: [embed] }
-        );
+        // await callDiscord(
+        //   `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+        //   "PATCH",
+        //   { embeds: [embed] }
+        // );
       } else {
         await callDiscord(
           `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
