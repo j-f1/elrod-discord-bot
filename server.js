@@ -29,7 +29,7 @@ app.get("/", async (req, res) => {
   try {
     const browser = await puppeteer.connect({
       browserWSEndpoint:
-        "wss://chrome.browserless.io?&timeout=10000&token=" + process.env.BROWSERLESS_TOKEN,
+        "wss://chrome.browserless.io?timeout=60000&token=" + process.env.BROWSERLESS_TOKEN,
       // args: ["--no-sandbox"],
       defaultViewport: {
         width: 1200,
