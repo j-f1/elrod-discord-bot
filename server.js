@@ -24,18 +24,18 @@ app.get("/", async (req, res) => {
   //   decrypt(encryptedToken, token_iv),
   //   decrypt(encryptedId, id_iv)
   // ]);
+  res.end({ success: true });
 
-  console.log("boot", (Date.now() - start) / 1000);
   try {
     const browser = await puppeteer.connect({
       browserWSEndpoint:
         "wss://chrome.browserless.io?timeout=60000&token=" +
         process.env.BROWSERLESS_TOKEN,
       // args: ["--no-sandbox"],
-      defaultViewport: {
-        width: 1200,
-        height: 1200
-      }
+      // defaultViewport: {
+      //   width: 1200,
+      //   height: 1200,
+      // },
     });
     try {
       console.log("launch", (Date.now() - start) / 1000);
@@ -48,8 +48,8 @@ app.get("/", async (req, res) => {
       await page.goto("https://jstris.jezevec10.com/");
       await snap();
 
-      await page.waitForSelector("#lobby").then(el =>
-        el.evaluate(node => {
+      await page.waitForSelector("#lobby").then((el) =>
+        el.evaluate((node) => {
           node.click();
           document.getElementById("createRoomButton").click();
         })
@@ -58,8 +58,8 @@ app.get("/", async (req, res) => {
 
       console.log("createRoom", (Date.now() - start) / 1000);
       await page.evaluate(
-        name =>
-          new Promise(resolve => {
+        (name) =>
+          new Promise((resolve) => {
             document.getElementById("roomName").value = name;
             document.getElementById("isPrivate").click();
             setTimeout(() => {
@@ -79,52 +79,49 @@ app.get("/", async (req, res) => {
 
       const roomLink = await page
         .waitForSelector(".joinLink")
-        .then(el => el.evaluate(node => node.textContent));
+        .then((el) => el.evaluate((node) => node.textContent));
       await snap();
       console.log("done in", Date.now() - start);
 
-      res.send({ success: true, link: roomLink });
-
       // now wait for the user to show up
-      let done = false
+      let done = false;
       while (Date.now() - start < 30e3) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         done = await page.evaluate(() => {
           const count = document.querySelectorAll(".chl.srv").length;
           if (count > 2) {
             document.getElementById("chatInput").value =
               "[elrod] someone has joined the room, so I’ll see myself out. Good luck!";
             document.getElementById("sendMsg").click();
-            return true
+            return true;
           }
         });
         if (done) break;
       }
       await browser.close();
-      
+
       if (!done) {
         // TODO: update embed
       }
     } catch (e) {
       console.error(e);
       await browser.close();
-      res.send({ success: false });
+      res.end({ success: false });
     }
   } catch (e) {
     console.error(e);
-    res.send({ success: false });
+    res.end({ success: false });
   }
-  // res.send(`Token: ${token}, ID: ${id}`);
 });
 
-app.get("/screenshot", (req, res) => {
-  res.header("Content-Type", "image/png");
-  res.send(screenshot);
-});
+// app.get("/screenshot", (req, res) => {
+//   res.header("Content-Type", "image/png");
+//   res.end(screenshot);
+// });
 app.get("/encrypt", async (req, res) => {
   const { token, id } = req.query;
   if (!token || !id) {
-    res.send(400, "Invalid request");
+    res.end(400, "Invalid request");
     return;
   }
   const [[encryptedToken, tokenIv], [encryptedId, idIv]] = await Promise.all(

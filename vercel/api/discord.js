@@ -16,11 +16,6 @@ module.exports = async (req, res) => {
     res.end("missing body");
     return;
   }
-  // handle ping
-  if (req.body.type === 1) {
-    res.json({ type: 1 });
-    return;
-  }
 
   const bodyChunks = [];
   req
@@ -29,12 +24,18 @@ module.exports = async (req, res) => {
       if (
         !verifyKey(
           Buffer.concat(bodyChunks),
-          req.headers["X-Signature-Ed25519"],
-          req.headers["X-Signature-Timestamp"],
+          req.headers["X-Signature-Ed25519".toLowerCase()],
+          req.headers["X-Signature-Timestamp".toLowerCase()],
           process.env.DISCORD_APP_PUBLIC_KEY
         )
       ) {
         return res.status(401).end("invalid request signature");
+      }
+
+      // handle ping
+      if (req.body.type === 1) {
+        res.json({ type: 1 });
+        return;
       }
 
       const command = req.body.data;
@@ -51,17 +52,23 @@ module.exports = async (req, res) => {
         return;
       }
 
-      res.json({
-        type: 5,
-        data: {
-          tts: false,
-          content: "Generating a link…",
-          allowed_mentions: { parse: [] },
-        },
-      });
+      const args = new Map(
+        (req.body.data.options || []).map(({ name, value }) => [name, value])
+      );
 
-      // const roomData = await fetch(
-      //   "/glitch?name=" + encodeURIComponent(req.body.data)
-      // );
+      const roomData = await fetch(
+        "https://magic-inquisitive-cobra.glitch.me/?name=" +
+          encodeURIComponent(args.get("name") ?? "Brown Band")
+      )
+        .then((res) => res.json())
+        .catch((err) => {
+          console.error(err);
+        });
+
+      console.log("res");
+
+      console.log(roomData);
+
+      res.json({ type: 5 });
     });
 };
