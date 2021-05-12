@@ -13,7 +13,7 @@ app.get("/", async (req, res) => {
     res.status(400).send("Invalid request");
     return;
   }
-  const start = Date.now()
+  const start = Date.now();
 
   // const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
   // if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
@@ -26,13 +26,16 @@ app.get("/", async (req, res) => {
   // ]);
 
   console.log("boot", (Date.now() - start) / 1000);
-  const browser = await puppeteer.launch({
-    args: ["--no-sandbox"],
+  try {
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: "wss://chrome.browserless.io/",
+    // args: ["--no-sandbox"],
     defaultViewport: {
-    width: 1200,
-    height: 1200
+      width: 1200,
+      height: 1200
     }
   });
+  try {
   console.log("launch", (Date.now() - start) / 1000);
   const page = await browser.newPage();
   const snap = async () => {
@@ -42,26 +45,26 @@ app.get("/", async (req, res) => {
 
   page.goto("https://jstris.jezevec10.com/");
   await snap();
-  await page
-    .waitForSelector("#lobby")
-    .then(el => el.click());
-  console.log("lobby", (Date.now() - start) / 1000);
-  await snap();
-  await page
-    .waitForSelector("#createRoomButton")
-    .then(el => el.click());
+  await page.waitForSelector("#lobby").then(el =>
+    el.evaluate(node => {
+      node.click();
+      document.getElementById("createRoomButton").click();
+    })
+  );
   console.log("createRoom", (Date.now() - start) / 1000);
   await snap();
-  await page.evaluate(name => {
-    document.getElementById("roomName").value = name;
-  }, name);
-  console.log("setName", (Date.now() - start) / 1000);
-  await snap();
-  await page.click("#isPrivate");
-  console.log("private", (Date.now() - start) / 1000);
-  await snap();
-  await page.waitForTimeout(250);
-  await page.click("#create");
+  await page.evaluate(
+    name =>
+      new Promise(resolve => {
+        document.getElementById("roomName").value = name;
+        document.getElementById("isPrivate").click();
+        setTimeout(() => {
+          document.getElementById("create").click();
+          resolve();
+        }, 250);
+      }),
+    name
+  );
   console.log("create", (Date.now() - start) / 1000);
   await snap();
   const roomLink = await page
@@ -72,7 +75,12 @@ app.get("/", async (req, res) => {
 
   await browser.close();
   res.send({ success: true, link: roomLink });
-
+  } catch (e) {
+    console.error(e)
+    await browser.close()
+    res.send({ success: false });
+  }
+  } catch (e) { console.error(e); res.send({ success: false });}
   // res.send(`Token: ${token}, ID: ${id}`);
 });
 
