@@ -8,9 +8,10 @@ const puppeteer = require("puppeteer");
 app.get("/", async (req, res) => {
   const { name } = req.query;
   if (!name) {
-    res.send(400, "Invalid request");
+    res.status(400).send("Invalid request");
     return;
   }
+  debugger;
 
   // const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
   // if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
@@ -27,9 +28,9 @@ app.get("/", async (req, res) => {
   });
   const page = await browser.newPage();
 
-  (await page.goto("https://jstris.jezevec10.com/")(
-    await page.waitForSelector("#lobby", { visible: true })
-  )).click();
+  await page.goto("https://jstris.jezevec10.com/");
+  cons
+  (await page.waitForSelector("#lobby", { visible: true })).click();
   (await page.waitForSelector("#createRoomButton", { visible: true })).click();
   await page.evaluate(name => {
     document.getElementById("roomName").value = name;
@@ -38,10 +39,12 @@ app.get("/", async (req, res) => {
   await page.click("#isPrivate");
   await page.waitForTimeout(250);
   await page.click("#create");
-  const roomLink = await page.waitForSelector('#joinLink', { visible:true})
+  const roomLink = await page
+    .waitForSelector("#joinLink", { visible: true })
+    .then(el => el.evaluate(node => node.textContent));
 
   await browser.close();
-  res.sendFile("/tmp/screenshot.png");
+  res.send({ success: true, link: roomLink });
 
   // res.send(`Token: ${token}, ID: ${id}`);
 });
