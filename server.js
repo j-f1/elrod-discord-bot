@@ -29,7 +29,8 @@ app.get("/", async (req, res) => {
   try {
     const browser = await puppeteer.connect({
       browserWSEndpoint:
-        "wss://chrome.browserless.io?timeout=60000&token=" + process.env.BROWSERLESS_TOKEN,
+        "wss://chrome.browserless.io?timeout=60000&token=" +
+        process.env.BROWSERLESS_TOKEN,
       // args: ["--no-sandbox"],
       defaultViewport: {
         width: 1200,
@@ -82,8 +83,23 @@ app.get("/", async (req, res) => {
       await snap();
       console.log("done in", Date.now() - start);
 
-      await browser.close();
       res.send({ success: true, link: roomLink });
+
+      // now wait for the user to show up
+      while (Date.now() - start < 30e3) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const done = await page.evaluate(() => {
+          const count = document.querySelectorAll(".chl.srv").length;
+          if (count > 2) {
+            document.getElementById("chatInput").value =
+              "[elrod] User has joined room, leaving.";
+            document.getElementById("sendMsg").click();
+            return true
+          }
+        });
+        if (done) break;
+      }
+      await browser.close();
     } catch (e) {
       console.error(e);
       await browser.close();
