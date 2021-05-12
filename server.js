@@ -24,7 +24,7 @@ app.get("/", async (req, res) => {
   //   decrypt(encryptedToken, token_iv),
   //   decrypt(encryptedId, id_iv)
   // ]);
-  res.end({ success: true });
+  res.send({ success: true });
 
   try {
     const browser = await puppeteer.connect({
@@ -106,17 +106,17 @@ app.get("/", async (req, res) => {
     } catch (e) {
       console.error(e);
       await browser.close();
-      res.end({ success: false });
+      res.send({ success: false });
     }
   } catch (e) {
     console.error(e);
-    res.end({ success: false });
+    res.send({ success: false });
   }
 });
 
 // app.get("/screenshot", (req, res) => {
 //   res.header("Content-Type", "image/png");
-//   res.end(screenshot);
+//   res.send(screenshot);
 // });
 app.get("/encrypt", async (req, res) => {
   const { token, id } = req.query;
