@@ -2,21 +2,49 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT;
 const { encrypt, decrypt } = require("./crypto");
+const puppeteer = require("puppeteer");
 
 // ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==&id=LN88YRtw0Dc3pM/Wf3OKiQ==&id_iv=LJB4OrN5kzZrNqkfKyQmTw==
 app.get("/", async (req, res) => {
-  const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
-  if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
+  const { name } = req.query;
+  if (!name) {
     res.send(400, "Invalid request");
     return;
   }
-  const [token, id] = await Promise.all(
-    [decrypt(encryptedToken, token_iv), decrypt(encryptedId, id_iv)]
+
+  // const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
+  // if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
+  //   res.send(400, "Invalid request");
+  //   return;
+  // }
+  // const [token, id] = await Promise.all([
+  //   decrypt(encryptedToken, token_iv),
+  //   decrypt(encryptedId, id_iv)
+  // ]);
+
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox"]
+  });
+  const page = await browser.newPage();
+
+  (await page.goto("https://jstris.jezevec10.com/")(
+    await page.waitForSelector("#lobby", { visible: true })
+  )).click();
+  (await page.waitForSelector("#createRoomButton", { visible: true })).click();
+  await page.evaluate(
+    name => {
+      document.getElementById("roomName").value = name;
+      document.getElementById("numPlayers").selectedIndex = 0
+    },
+    name
   );
-  res.send(
-    `Token: ${token}, ID: ${id}`
-  );
-})
+  await page.click('#isPrivate')
+
+  await browser.close();
+  res.sendFile("/tmp/screenshot.png");
+
+  // res.send(`Token: ${token}, ID: ${id}`);
+});
 app.get("/encrypt", async (req, res) => {
   const { token, id } = req.query;
   if (!token || !id) {
