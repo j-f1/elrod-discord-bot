@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "devDependencies": {
+    "@vercel/node": "^1.10.0"
+  },
+  "dependencies": {
+    "discord-interactions": "^2.0.2"
+  }
+}

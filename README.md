@@ -1,5 +1,7 @@
 # Hello Node (mvp)
 
+Add the bot: https://discord.com/oauth2/authorize?client_id=842062315490771034&scope=applications.commands
+
 [Node.js](https://nodejs.org/en/about/) is a popular runtime that lets you run JavaScript on the server. This project uses the [Fastify](https://www.fastify.io/) framework and basic templating with [Handlebars](https://handlebarsjs.com/).
 
 ## What's in this project?

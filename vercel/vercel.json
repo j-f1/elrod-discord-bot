@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "github": {
+    "silent": true
+  },
+  "rewrites": [
+    {
+      "source": "/glitch",
+      "destination": "https://magic-inquisitive-cobra.glitch.me/"
+    }
+  ]
+}
