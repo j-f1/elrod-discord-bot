@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 
-const serverSlug = "";
+const serverSlug = "/guilds/809610588040855552";
+// const serverSlug = "";
 
 const callDiscord = (route, method, body) =>
   fetch(`https://discord.com/api/v8${route}`, {

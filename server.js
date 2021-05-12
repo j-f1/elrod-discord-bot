@@ -1,23 +1,142 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT;
+
 const { encrypt, decrypt } = require("./crypto");
-const puppeteer = require("puppeteer");
-const fetch = require("node-fetch").default;
+const jstris = require("./jstris");
+const { callDiscord } = require("./utils");
+const bodyParser = require("body-parser");
+const { verifyKeyMiddleware } = require("discord-interactions");
+const child_process = require("child_process");
 
-let screenshot;
+app.post(
+  "/discord",
+  verifyKeyMiddleware(process.env.DISCORD_APP_PUBLIC_KEY),
+  (req, res) => {
+    const command = req.body.data;
+    switch (command && command.name) {
+      case "about-tetrod": {
+        res.json({
+          type: 4,
+          data: {
+            embeds: [
+              {
+                title: `Tetrod`,
+                type: "rich",
+                url: "https://github.com/j-f1/elrod-discord-bot",
+                description: `Tetrod is a bot by Jed Fox. [Glitch link](https://glitch.com/edit/#!/magic-inquisitive-cobra).`,
+                fields: [
+                  {
+                    name: "Commit SHA",
+                    value: `\`${child_process
+                      .execSync("git rev-parse HEAD", { encoding: "utf-8" })
+                      .trim()}\``
+                  }
+                ]
+              }
+            ]
+          }
+        });
+        return;
+      }
+      case "jstris": {
+        try {
+          const args = new Map(
+            (req.body.data.options || []).map(({ name, value }) => [
+              name,
+              value
+            ])
+          );
 
-const callDiscord = (route, method, body) =>
-  fetch(`https://discord.com/api/v8${route}`, {
-    method,
-    headers: new fetch.Headers([
-      ["Authorization", `Bot ${process.env.DISCORD_BOT_TOKEN}`],
-      ["Content-Type", "application/json"],
-    ]),
-    body: JSON.stringify(body),
-  })
-    .then((res) => res.json())
-    .catch(console.error);
+          const token = req.body.token;
+
+          const name = args.get("name") || "Brown Band";
+          const start = Date.now();
+
+          res.json({ type: 5 });
+
+          jstris(name, async roomLink => {
+            const embed = {
+              title: `Jstris: ${name}`,
+              type: "rich",
+              url: roomLink,
+              color: "3066993",
+              description: `<${roomLink}>`
+            };
+
+            await callDiscord(
+              `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+              "PATCH",
+              {
+                embeds: [
+                  {
+                    ...embed
+                    // footer: {
+                    //   text: "Waiting for someone to join…"
+                    // }
+                  }
+                ]
+              }
+            );
+          })
+            .then(([roomWorkedOut, roomLink]) => {
+              if (roomWorkedOut) {
+                // await callDiscord(
+                //   `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+                //   "PATCH",
+                //   { embeds: [embed] }
+                // );
+              } else {
+                return callDiscord(
+                  `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+                  "PATCH",
+                  {
+                    embeds: [
+                      {
+                        title: `Jstris: ${name}`,
+                        type: "rich",
+                        color: "15158332",
+                        url: undefined,
+                        description:
+                          "Room timed out. Run `/jstris` to get a new link!"
+                      }
+                    ]
+                  }
+                );
+              }
+            })
+            .catch(console.error);
+        } catch (e) {
+          console.error(e);
+          res.json({
+            type: 4,
+            data: {
+              tts: false,
+              content: "Oops, something went wrong! cc <@706842348239323199>",
+              allowed_mentions: {
+                users: ["706842348239323199"]
+              }
+            }
+          });
+        }
+        return;
+      }
+      default: {
+        res.json({
+          type: 4,
+          data: {
+            tts: false,
+            content: `Unrecognized command \`${(command && command.name) ||
+              "<unknown>"}\``,
+            embeds: [],
+            allowed_mentions: { parse: [] }
+          }
+        });
+        return;
+      }
+    }
+  }
+);
 
 // ex: /?token=yW--sHWMTP80cCYbyu01KA==&token_iv=C5eSwdMxVPA4nIpGAthyLg==
 app.get("/", async (req, res) => {
@@ -32,139 +151,58 @@ app.get("/", async (req, res) => {
 
   res.send({ success: true });
 
-  try {
-    const browser = await puppeteer.connect({
-      browserWSEndpoint:
-        "wss://chrome.browserless.io?timeout=60000&token=" +
-        process.env.BROWSERLESS_TOKEN,
-      // args: ["--no-sandbox"],
-      // defaultViewport: {
-      //   width: 1200,
-      //   height: 1200,
-      // },
-    });
-    try {
-      // console.log("launch", (Date.now() - start) / 1000);
-      const page = await browser.newPage();
-      const snap = async () => {
-        // screenshot = await page.screenshot();
-        // console.log("snap");
-      };
+  const [roomWorkedOut, roomLink] = await jstris(name, async roomLink => {
+    const embed = {
+      title: `Jstris: ${name}`,
+      type: "rich",
+      url: roomLink,
+      color: "3066993",
+      description: `<${roomLink}>`
+    };
 
-      await page.goto("https://jstris.jezevec10.com/");
-      await snap();
-
-      await page.waitForSelector("#lobby").then((el) =>
-        el.evaluate((node) => {
-          node.click();
-          document.getElementById("createRoomButton").click();
-        })
-      );
-      await snap();
-
-      // console.log("createRoom", (Date.now() - start) / 1000);
-      await page.evaluate(
-        (name) =>
-          new Promise((resolve) => {
-            document.getElementById("roomName").value = name;
-            document.getElementById("isPrivate").click();
-            setTimeout(() => {
-              document.getElementById("create").click();
-              resolve();
-            }, 500);
-          }),
-        name
-      );
-      // console.log("create", (Date.now() - start) / 1000);
-      await snap();
-      await page.waitForTimeout(500);
-      await snap();
-
-      await page.waitForTimeout(500);
-      await snap();
-
-      const roomLink = await page
-        .waitForSelector(".joinLink")
-        .then((el) => el.evaluate((node) => node.textContent));
-      await snap();
-      console.log("generated link in", (Date.now() - start) / 1000);
-
-      const embed = {
-        title: `Jstris: ${name}`,
-        type: "rich",
-        url: roomLink,
-        color: "3066993",
-        description: `<${roomLink}>`,
-      };
-
-      await callDiscord(
-        `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-        "PATCH",
-        {
-          embeds: [
-            {
-              ...embed,
-              // footer: {
-              //   text: "Waiting for someone to join…"
-              // }
-            },
-          ],
-        }
-      );
-
-      // now wait for the user to show up
-      let done = false;
-      while (Date.now() - start < 30e3) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        done = await page.evaluate(() => {
-          const count = document.querySelectorAll(".chl.srv").length;
-          if (count > 2) {
-            document.getElementById("chatInput").value =
-              "[elrod] someone has joined the room, so I’ll see myself out. Good luck!";
-            document.getElementById("sendMsg").click();
-            return true;
-          }
-        });
-        if (done) break;
-      }
-      await browser.close();
-
-      if (done) {
-        // await callDiscord(
-        //   `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-        //   "PATCH",
-        //   { embeds: [embed] }
-        // );
-      } else {
-        await callDiscord(
-          `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
-          "PATCH",
+    await callDiscord(
+      `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+      "PATCH",
+      {
+        embeds: [
           {
-            embeds: [
-              {
-                ...embed,
-                color: "15158332",
-                url: undefined,
-                description: "Room timed out. Run `/jstris` to get a new link!",
-              },
-            ],
+            ...embed
+            // footer: {
+            //   text: "Waiting for someone to join…"
+            // }
           }
-        );
+        ]
       }
-    } catch (e) {
-      console.error(e);
-      await browser.close();
-      res.send({ success: false });
-    }
-  } catch (e) {
-    console.error(e);
-    res.send({ success: false });
+    );
+  });
+  if (roomWorkedOut) {
+    // await callDiscord(
+    //   `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+    //   "PATCH",
+    //   { embeds: [embed] }
+    // );
+  } else {
+    await callDiscord(
+      `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
+      "PATCH",
+      {
+        embeds: [
+          {
+            title: `Jstris: ${name}`,
+            type: "rich",
+            color: "15158332",
+            url: undefined,
+            description: "Room timed out. Run `/jstris` to get a new link!"
+          }
+        ]
+      }
+    );
   }
 });
 
 // app.get("/screenshot", (req, res) => {
 //   res.header("Content-Type", "image/png");
-//   res.send(screenshot);
+//   res.send(screenshot[0]);
 // });
 
 app.get("/encrypt", async (req, res) => {
