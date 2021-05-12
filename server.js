@@ -86,13 +86,14 @@ app.get("/", async (req, res) => {
       res.send({ success: true, link: roomLink });
 
       // now wait for the user to show up
+      let done = false
       while (Date.now() - start < 30e3) {
         await new Promise(resolve => setTimeout(resolve, 100));
-        const done = await page.evaluate(() => {
+        done = await page.evaluate(() => {
           const count = document.querySelectorAll(".chl.srv").length;
           if (count > 2) {
             document.getElementById("chatInput").value =
-              "[elrod] User has joined room, leaving.";
+              "[elrod] someone has joined the room, so I’ll see myself out. Good luck!";
             document.getElementById("sendMsg").click();
             return true
           }
@@ -100,6 +101,10 @@ app.get("/", async (req, res) => {
         if (done) break;
       }
       await browser.close();
+      
+      if (!done) {
+        // TODO: update embed
+      }
     } catch (e) {
       console.error(e);
       await browser.close();
