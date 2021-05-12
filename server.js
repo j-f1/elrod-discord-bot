@@ -13,7 +13,7 @@ app.get("/", async (req, res) => {
     res.status(400).send("Invalid request");
     return;
   }
-  debugger;
+  const start = Date.now()
 
   // const { token: encryptedToken, token_iv, id: encryptedId, id_iv } = req.query;
   // if (!encryptedToken || !token_iv || !encryptedId || !id_iv) {
@@ -25,13 +25,19 @@ app.get("/", async (req, res) => {
   //   decrypt(encryptedId, id_iv)
   // ]);
 
+  console.log("boot");
   const browser = await puppeteer.launch({
-    args: ["--no-sandbox"]
+    args: ["--no-sandbox"],
+    defaultViewport: {
+    width: 1200,
+    height: 1200
+    }
   });
+  console.log("launch");
   const page = await browser.newPage();
   const snap = async () => {
-    screenshot = await page.screenshot();
-    console.log("snap");
+    // screenshot = await page.screenshot();
+    // console.log("snap");
   };
 
   await page.goto("https://jstris.jezevec10.com/");
@@ -60,10 +66,10 @@ app.get("/", async (req, res) => {
   console.log("create");
   await snap();
   const roomLink = await page
-    .waitForSelector("#joinLink", { visible: true })
+    .waitForSelector(".joinLink", { visible: true })
     .then(el => el.evaluate(node => node.textContent));
   await snap();
-  console.log("done");
+  console.log("done in", Date.now() - start);
 
   await browser.close();
   res.send({ success: true, link: roomLink });
