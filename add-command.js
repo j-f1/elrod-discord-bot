@@ -1,7 +1,8 @@
 const fetch = require("node-fetch");
 
-const serverSlug = "/guilds/809610588040855552";
-// const serverSlug = "";
+// const serverSlug = "/guilds/" + process.argv[2];
+// console.log(serverSlug)
+const serverSlug = "";
 
 const callDiscord = (route, method, body) =>
   fetch(`https://discord.com/api/v8${route}`, {
@@ -21,7 +22,7 @@ const callDiscord = (route, method, body) =>
     "POST",
     {
       name: "jstris",
-      description: "Create a jstris room",
+      description: "Create a jstris room • contact @Jed Fox#3082 if it doesn’t work",
       options: [
         {
           name: "name",
