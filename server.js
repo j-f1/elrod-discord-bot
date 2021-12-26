@@ -2,10 +2,8 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT;
 
-const { encrypt, decrypt } = require("./crypto");
 const jstris = require("./jstris");
 const { callDiscord } = require("./utils");
-const bodyParser = require("body-parser");
 const { verifyKeyMiddleware } = require("discord-interactions");
 const child_process = require("child_process");
 

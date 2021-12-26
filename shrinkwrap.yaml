@@ -1,15 +1,17 @@
 dependencies:
+  discord-interactions: 2.0.2
   express: 4.17.1
+  node-fetch: 2.6.1
   puppeteer: 9.1.1
 packages:
-  /@types/node/15.0.2:
+  /@types/node/15.3.0:
     dev: false
     optional: true
     resolution:
-      integrity: sha512-p68+a+KoxpoB47015IeYZYRrdqMUcpbK8re/zpFB8Ld46LHC1lPEbp3EXgkEhAYEcPvjJF6ZO+869SQ0aH1dcA==
+      integrity: sha512-8/bnjSZD86ZfpBsDlCIkNXIvm+h6wi9g7IqL+kmFkQ+Wvu3JrasgLElfiPgoo8V8vVfnEi0QVS12gbl94h9YsQ==
   /@types/yauzl/2.9.1:
     dependencies:
-      '@types/node': 15.0.2
+      '@types/node': 15.3.0
     dev: false
     optional: true
     resolution:
@@ -152,6 +154,12 @@ packages:
     dev: false
     resolution:
       integrity: sha512-VvlVYY+VDJe639yHs5PHISzdWTLL3Aw8rO4cvUtwvoxFd6FHbE4OpHHcde52M6096uYYazAmd4l0o5VuFRO2WA==
+  /discord-interactions/2.0.2:
+    dependencies:
+      tweetnacl: 1.0.3
+    dev: false
+    resolution:
+      integrity: sha512-zKQB63xWLYbOZMyU+EcLrXnUCMuWkU8/SoH7jFvc99Y1amHqli3oPEkgoLWUmYckL+HCPuA7LXpNyXaFvoqIww==
   /ee-first/1.1.1:
     dev: false
     resolution:
@@ -687,6 +695,10 @@ packages:
       node: '>=0.6'
     resolution:
       integrity: sha512-yaOH/Pk/VEhBWWTlhI+qXxDFXlejDGcQipMlyxda9nthulaxLZUNcUqFxokp0vcYnvteJln5FNQDRrxj3YcbVw==
+  /tweetnacl/1.0.3:
+    dev: false
+    resolution:
+      integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
   /type-is/1.6.18:
     dependencies:
       media-typer: 0.3.0
@@ -749,5 +761,7 @@ registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
 specifiers:
+  discord-interactions: ^2.0.1
   express: ^4.17.1
+  node-fetch: ^2.6.1
   puppeteer: ^9.1.1
