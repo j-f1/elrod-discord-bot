@@ -63,7 +63,7 @@ module.exports = async function(name, handleRoomLink) {
 
     // now wait for the user to show up
     let done = false;
-    while (Date.now() - start < 30e3) {
+    while (Date.now() - start < 60e3) {
       await new Promise(resolve => setTimeout(resolve, 100));
       done = await page.evaluate(() => {
         const count = document.querySelectorAll(".chl.srv").length;
