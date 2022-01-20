@@ -66,10 +66,22 @@ module.exports = async function(name, handleRoomLink) {
     while (Date.now() - start < 60e3) {
       await new Promise(resolve => setTimeout(resolve, 100));
       done = await page.evaluate(() => {
-        const count = document.querySelectorAll(".chl.srv").length;
-        if (count > 2) {
-          document.getElementById("chatInput").value =
-            "[tetrod] someone has joined the room, so I’ll see myself out. Good luck!";
+        const serverMessages = document.querySelectorAll(".chl.srv");
+        if (serverMessages.length > 2) {
+          try {
+            const message = serverMessages[3];
+            let user;
+            if (message.querySelector('a')) {
+              user = message.querySelector('a').textContent;
+            } else {
+              user = message.querySelector('em').textContent.split(' ')[0];
+            }
+            document.getElementById("chatInput").value =
+              `[tetrod] Welcome @${user}. Now that you’ve joined the room, my services are no longer needed. Good luck!`;
+          } catch {
+            document.getElementById("chatInput").value =
+              "[tetrod] someone has joined the room, so I’ll see myself out. Good luck!";
+          }
           document.getElementById("sendMsg").click();
           return true;
         }
