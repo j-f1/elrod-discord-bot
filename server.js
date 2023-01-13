@@ -62,6 +62,7 @@ app.post(
               type: "rich",
               url: roomLink,
               color: "3066993",
+              description: content,
               footer: {
                 text: roomLink,
               },
@@ -74,7 +75,7 @@ app.post(
                 content,
                 embeds: [embed],
                 allowed_mentions: {
-                  parse: ["roles"],
+                  roles: [process.env.DISCORD_MENTION_ROLE],
                 },
               }
             );
