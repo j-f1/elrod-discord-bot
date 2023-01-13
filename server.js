@@ -54,12 +54,18 @@ app.post(
           res.json({ type: 5 });
 
           jstris(name, async (roomLink) => {
+            const description = process.env.DISCORD_MENTION_ROLE
+              ? `\u{1f44b} <@&${process.env.DISCORD_MENTION_ROLE}>`
+              : null;
             const embed = {
               title: `Jstris: ${name}`,
               type: "rich",
               url: roomLink,
               color: "3066993",
-              description: `<${roomLink}>`,
+              description,
+              footer: {
+                text: roomLink,
+              },
             };
 
             await callDiscord(
