@@ -80,6 +80,10 @@ app.post(
                     // }
                   },
                 ],
+                allowed_mentions: {
+                  parse: ["roles"],
+                  
+                }
               }
             );
           })
