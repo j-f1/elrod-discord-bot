@@ -54,7 +54,7 @@ app.post(
           res.json({ type: 5 });
 
           jstris(name, async (roomLink) => {
-            const description = process.env.DISCORD_MENTION_ROLE
+            const content = process.env.DISCORD_MENTION_ROLE
               ? `\u{1f44b} <@&${process.env.DISCORD_MENTION_ROLE}>`
               : null;
             const embed = {
@@ -62,7 +62,6 @@ app.post(
               type: "rich",
               url: roomLink,
               color: "3066993",
-              description,
               footer: {
                 text: roomLink,
               },
@@ -72,18 +71,11 @@ app.post(
               `/webhooks/${process.env.DISCORD_APP_ID}/${token}/messages/@original`,
               "PATCH",
               {
-                embeds: [
-                  {
-                    ...embed,
-                    // footer: {
-                    //   text: "Waiting for someone to join…"
-                    // }
-                  },
-                ],
+                content,
+                embeds: [embed],
                 allowed_mentions: {
                   parse: ["roles"],
-                  
-                }
+                },
               }
             );
           })
