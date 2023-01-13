@@ -62,7 +62,6 @@ app.post(
               type: "rich",
               url: roomLink,
               color: "3066993",
-              description: content,
               footer: {
                 text: roomLink,
               },
